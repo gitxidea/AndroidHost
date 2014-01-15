@@ -40,8 +40,8 @@ public class MainActivity extends Activity {
 		View[] view = p.getView(cls);
 
 		View g = findViewById(R.id.container);
-		System.out.println("test_text:"+p.a.getBaseContext().getString(0x7f040001));
-		Context c = p.a.getBaseContext();
+		System.out.println("test_text:"+p.a.getPluginContext().getString(0x7f040001));
+		Context c = p.a.getPluginContext();
 		AssetManager am = c.getAssets();
 		p.a.getLayoutInflater().inflate(0x7f030000, null);
 		//((TextView)view[1]).setText("Plugin 1###");

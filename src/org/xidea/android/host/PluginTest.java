@@ -5,7 +5,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.xidea.android.ApkPluginLoader;
 
 import android.annotation.SuppressLint;
 import android.app.Application;
@@ -23,14 +22,14 @@ public class PluginTest {
 		File fc = installPlugin("C", app);
 
 		ApkPluginLoader a = new ApkPluginLoader(app, fa);
-		a.addPublicPackage("com.example.a");
+		a.classLoader.addPublicPackage("com.example.a");
 //		a.getBaseContext().getAssets().get
 		ApkPluginLoader b = new ApkPluginLoader(app, fb);
-		b.addDependence(a);
-		b.addPublicPackage("com.example.b");
+		b.addDependence(a.classLoader);
+		b.classLoader.addPublicPackage("com.example.b");
 		ApkPluginLoader c = new ApkPluginLoader(app, fc);
-		c.addDependence(b);
-		c.addPublicPackage("com.example.c");
+		c.addDependence(b.classLoader);
+		c.classLoader.addPublicPackage("com.example.c");
 		this.a = a;
 		this.b=b;
 		this.c = c;
@@ -40,9 +39,9 @@ public class PluginTest {
 		try {
 
 			Class<?>[] cls = new Class<?>[]{
-					b.loadClass("com.example.b.B"),
-					a.loadClass("com.example.a.A"),
-					c.loadClass("com.example.c.C")
+					b.classLoader.loadClass("com.example.b.B"),
+					a.classLoader.loadClass("com.example.a.A"),
+					c.classLoader.loadClass("com.example.c.C")
 			};
 			//c.loadClass("com.example.c.C").getMethod("test").invoke(clazz.newInstance());
 			Log.e("S0","success");

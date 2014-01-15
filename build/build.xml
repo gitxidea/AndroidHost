@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="plugin"  basedir="../" default="build">
+	<target name="build">
+		<property name="host.dir" value="/Users/wy/git/AndroidHost/"/>
+		<property name="plugin-ws" value="/Users/wy/Documents/workspace/"/>
+
+		<ant antfile="${basedir}/build/plugin.xml" dir="${plugin-ws}/A/" />
+	    <copy file="${plugin-ws}/A/bin/plugin-release.apk" tofile="${host.dir}/assets/com.example.a.apk"/>
+		
+		<ant antfile="${basedir}/build/plugin.xml" dir="${plugin-ws}/B/"/>
+	    <copy file="${plugin-ws}/B/bin/plugin-release.apk" tofile="${host.dir}/assets/com.example.b.apk"/>
+		
+		<ant antfile="${basedir}/build/plugin.xml" dir="${plugin-ws}/C/"/>
+	    <copy file="${plugin-ws}/C/bin/plugin-release.apk" tofile="${host.dir}/assets/com.example.c.apk"/>
+	</target>
+</project>

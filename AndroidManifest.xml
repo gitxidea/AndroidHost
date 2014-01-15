@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.xidea.android.host"
+    xmlns:p="http://www.xidea.org/android/plugin"
     android:versionCode="1"
     android:versionName="1.0" >
+    <p:plugin p:name=".PluginName">
+        <p:dependence p:name="x,y,x"/>
+    </p:plugin>
 
     <uses-sdk
         android:minSdkVersion="8"
