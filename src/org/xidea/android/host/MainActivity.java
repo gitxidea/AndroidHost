@@ -19,7 +19,7 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		HostEnv.init(getApplication());
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+		setContentView(R.layout.main);
 		long t1 = System.nanoTime();
 		PluginTest p = null;
 		try {
@@ -50,6 +50,8 @@ public class MainActivity extends Activity {
 		t1=t2;t2= System.nanoTime();
 		
 		System.out.println("time2 used:"+(t2-t1)/100000000d);
+		Plugin pa = HostEnv.getPlugin("com.example.a.A");
+//		HostEnv.show(pa.index());
 	}
 
 	@Override

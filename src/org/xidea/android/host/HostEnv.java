@@ -11,6 +11,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import android.app.Application;
+import android.app.Fragment;
+import android.content.Intent;
 
 public class HostEnv {
 	private static HostImpl impl;
@@ -29,18 +31,22 @@ public class HostEnv {
 		return impl.getPlugin(type);
 	}
 
-	public static PluginPackage findPluginPackage(Class<? extends Object> type) {
-		return impl.findPluginPackage(type);
+	public static PluginPackage findClassPackage(Class<? extends Object> type) {
+		return impl.findClassPackage(type);
 	}
 
 	public static PluginPackage requirePluginPackage(String packageName){
 		return impl.requirePluginPackage(packageName);
 	}
 
+	public static void show(String pluginPackage,String className) {
+		impl.app.startActivity(HostActivity.create(pluginPackage,className,null));
+	}
+
 }
 
 class HostImpl {
-	private Application app;
+	Application app;
 
 	private WeakHashMap<String, PluginInfo> infoMap = new WeakHashMap<String, PluginInfo>();
 	private WeakHashMap<String, PluginPackage> loaderMap = new WeakHashMap<String, PluginPackage>();
@@ -81,7 +87,7 @@ class HostImpl {
 		return null;
 	}
 
-	protected PluginPackage findPluginPackage(Class<? extends Object> type) {
+	protected PluginPackage findClassPackage(Class<? extends Object> type) {
 		ClassLoader cl = type.getClassLoader();
 		if (cl instanceof PluginPackage) {
 			return (PluginPackage) cl;
@@ -113,7 +119,7 @@ class HostImpl {
 	}
 
 	protected File initResource(String packageName, Application app) {
-		File pluginDir = app.getDir("plugin/"+packageName, 0);
+		File pluginDir = app.getDir("plugin_"+packageName, 0);
 		String fileName = packageName + ".apk";
 		try {
 			InputStream in = app.getResources().getAssets().open(fileName);
@@ -123,13 +129,14 @@ class HostImpl {
 			Enumeration<? extends ZipEntry> e = file.entries();
 			while(e.hasMoreElements()){
 				ZipEntry entry = e.nextElement();
-				if(!entry.isDirectory()){
-					InputStream ein = file.getInputStream(entry);
+				String name = entry.getName();
+				if(!entry.isDirectory() && name.endsWith(".so")){
+					//name = name.replace('\\', '/');
 					//TODO:平台差异优化
-					String name = entry.getName().replace('\\', '/');
-					if(name.endsWith(".so") && name.startsWith("libs/armeabi/")){
-						System.err.println(name);
-						copy(in,new File(pluginDir,name.substring(name.lastIndexOf('/')+1)));
+					if(name.startsWith("lib/armeabi/")){
+						InputStream ein = file.getInputStream(entry);
+						//System.err.println(name);
+						copy(ein,new File(pluginDir,name.substring(name.lastIndexOf('/')+1)));
 					}
 				}
 			}

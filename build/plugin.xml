@@ -73,7 +73,29 @@
        	</copy>
        	
     </target>
-	
+    <!-- Converts this project's .class files into .dex files -->
+    <target name="-dex2" depends="-compile, -post-compile, -obfuscate">
+        <do-only-if-manifest-hasCode elseText="hasCode = false. Skipping...">
+            <!-- only convert to dalvik bytecode is *not* a library -->
+            <do-only-if-not-library elseText="Library project: do not convert bytecode..." >
+                <!-- special case for instrumented builds: need to use no-locals and need
+                     to pass in the emma jar. -->
+                <if condition="${build.is.instrumented}">
+                    <then>
+                        <dex-helper nolocals="true">
+                            <external-libs>
+                                <fileset file="${emma.dir}/emma_device.jar" />
+                            </external-libs>
+                        </dex-helper>
+                    </then>
+                    <else>
+                        <dex-helper />
+                    </else>
+                </if>
+            </do-only-if-not-library>
+        </do-only-if-manifest-hasCode>
+    </target>
+
 	<!-- Converts this project's .class files into .dex files -->
 	<target name="-pre-deploy" depends="-pre-deploy-copy,release">
 		<delete>
@@ -85,6 +107,10 @@
 		<echo> executable="${dx}" output="${intermediate.dex.file}" nolocals="@{nolocals}" forceJumbo="${dex.force.jumbo}" disableDexMerger="true" verbose="true"</echo>
 		<dex executable="${dx}" output="${intermediate.dex.file}" nolocals="@{nolocals}" forceJumbo="${dex.force.jumbo}" disableDexMerger="true" verbose="true">
 			<path path="${out.absolute.dir}/classes" />
+			<fileset dir="${jar.libs.absolute.dir}">
+				<include name="*.jar"/>
+				<exclude name="android-support-v4.jar"/>
+			</fileset>
 		</dex>
 		<package-helper />
 		<antcall target="-release-sign"/>

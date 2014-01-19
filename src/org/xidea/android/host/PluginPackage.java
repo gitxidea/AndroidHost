@@ -12,7 +12,7 @@ public abstract interface PluginPackage {
 	
 	public abstract ClassLoader getClassLoader();
 
-	public Class<?> loadClass(String className) throws ClassNotFoundException ;
+	public Class<?> loadClass(String className) throws ClassNotFoundException;
 
 	public abstract LayoutInflater getLayoutInflater();
 

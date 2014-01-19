@@ -4,11 +4,14 @@ import java.util.ArrayList;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.app.Application;
 import android.content.ComponentCallbacks;
 import android.os.Build;
+import android.os.Bundle;
 
 public class HostApplication extends Application {
+	private static HostApplication INSTANCE;
 	private ArrayList<ApplicationCallback> callbackList = new ArrayList<ApplicationCallback>();
 
 	public interface ApplicationCallback extends ComponentCallbacks {
@@ -17,10 +20,26 @@ public class HostApplication extends Application {
 		public void onTrimMemory(int level);
 	}
 
+    public interface ActivityCallback {
+        void onCreated(Activity activity, Bundle savedInstanceState);
+        void onStarted(Activity activity);
+        void onResumed(Activity activity);
+        void onPaused(Activity activity);
+        void onStopped(Activity activity);
+        void onSaveInstanceState(Activity activity, Bundle outState);
+        void onDestroyed(Activity activity);
+    }
+	public static HostApplication getInstance(){
+		return INSTANCE;
+	}
 	@Override
 	public void onCreate() {
+		INSTANCE = this;
 		super.onCreate();
 		HostEnv.init(this);
+		//load map example
+		HostEnv.requirePluginPackage("com.example.a");
+		
 		Object[] callbacks = callbackList.toArray();
 		for (int i = 0; i < callbacks.length; i++) {
 			Object c = callbacks[i];

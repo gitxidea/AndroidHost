@@ -167,7 +167,7 @@ class ApkClassLoader extends DexClassLoader {
 			if (buf.length() > 0) {
 				buf.append('|');
 			}
-			buf.append("^" + name.replaceAll("[\\.]", "\\.") + "$");
+			buf.append("^" + name.replaceAll("[\\.]", "\\.").replaceAll("[\\$]", "\\$") + "$");
 			publicPattern = null;
 		}
 
