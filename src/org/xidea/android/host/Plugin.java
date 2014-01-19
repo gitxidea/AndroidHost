@@ -1,6 +1,6 @@
 package org.xidea.android.host;
 
-import android.app.Fragment;
+import android.support.v4.app.Fragment;
 
 public interface Plugin {
 	public void install(PluginPackage context);
