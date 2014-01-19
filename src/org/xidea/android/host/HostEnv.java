@@ -125,13 +125,15 @@ class HostImpl {
 				ZipEntry entry = e.nextElement();
 				if(!entry.isDirectory()){
 					InputStream ein = file.getInputStream(entry);
-					//TODO:平台差异
-					String name = entry.getName();
-					if(name.endsWith(".so") && name.startsWith("libs/")){
+					//TODO:平台差异优化
+					String name = entry.getName().replace('\\', '/');
+					if(name.endsWith(".so") && name.startsWith("libs/armeabi/")){
+						System.err.println(name);
 						copy(in,new File(pluginDir,name.substring(name.lastIndexOf('/')+1)));
 					}
 				}
 			}
+			file.close();
 			return plugin;
 		} catch (IOException ex) {
 			ex.printStackTrace();
