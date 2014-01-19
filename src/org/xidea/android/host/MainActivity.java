@@ -17,6 +17,7 @@ public class MainActivity extends Activity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		HostEnv.init(getApplication());
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		long t1 = System.nanoTime();

@@ -9,18 +9,12 @@ import java.util.WeakHashMap;
 import android.app.Application;
 
 public class HostEnv {
-	private static Application APP;
+	private static HostImpl impl;
 
-	public static void init(Application app){
-		APP = app;
-	}
-	private static class PluginInfo<T extends Plugin> {
-		static WeakHashMap<String, PluginInfo> map = new WeakHashMap<String, PluginInfo>();
-		/**
-		 * export. dependence. pluginPackage. pluginName.
-		 */
-		ApkPluginLoader loader;
-		T plugin;
+	public static void init(Application app) {
+		if(impl == null){
+			impl = new HostImpl(app);
+		}
 	}
 
 	public static <T extends Plugin> T getPlugin(Class<T> type) {
@@ -28,13 +22,47 @@ public class HostEnv {
 	}
 
 	public static <T extends Plugin> T getPlugin(String type) {
-		ApkPluginLoader loader = requirePluginInfo(type).loader;
+		return impl.getPlugin(type);
+	}
+
+	public static PluginPackage findPluginPackage(Class<? extends Object> type) {
+		return impl.findPluginPackage(type);
+	}
+
+	public static PluginPackage requirePluginPackage(String packageName){
+		return impl.requirePluginPackage(packageName);
+	}
+
+}
+
+class HostImpl {
+	private Application app;
+
+	private WeakHashMap<String, PluginInfo> infoMap = new WeakHashMap<String, PluginInfo>();
+	private WeakHashMap<String, PluginPackage> loaderMap = new WeakHashMap<String, PluginPackage>();
+
+	private static class PluginInfo<T extends Plugin> {
+
+		/**
+		 * export. dependence. pluginPackage. pluginName.
+		 */
+		PluginPackage loader;
+		T plugin;
+	}
+
+	public HostImpl(Application app) {
+		this.app = app;
+	}
+
+	protected <T extends Plugin> T getPlugin(String type) {
 		try {
 			@SuppressWarnings("unchecked")
-			Class<T> clazz = (Class<T>) loader.loadClass(type);
-			@SuppressWarnings("unchecked")
-			PluginInfo<T> p = PluginInfo.map.get(type);
+			PluginInfo<T> p = infoMap.get(type);
 			if (p.plugin == null) {
+				PluginPackage loader = requirePluginInfo(type).loader;
+				@SuppressWarnings("unchecked")
+				Class<T> clazz = (Class<T>) ((ApkPluginLoader) loader)
+						.loadClass(type);
 				p.plugin = clazz.newInstance();
 				p.plugin.install(loader);
 			}
@@ -49,37 +77,62 @@ public class HostEnv {
 		return null;
 	}
 
-	public static PluginLoader getPluginLoader(Class<? extends Plugin> type) {
-		return requirePluginInfo(type.getName()).loader;
+	protected PluginPackage findPluginPackage(Class<? extends Object> type) {
+		ClassLoader cl = type.getClassLoader();
+		if (cl instanceof PluginPackage) {
+			return (PluginPackage) cl;
+		} else {
+
+		}
+		return null;
 	}
 
-	private static PluginInfo requirePluginInfo(String pluginName) {
-		PluginInfo<?> p = PluginInfo.map.get(pluginName);
+	@SuppressWarnings("rawtypes")
+	private PluginInfo<?> requirePluginInfo(String pluginName) {
+		PluginInfo<?> p = infoMap.get(pluginName);
 		if (p == null) {
-			p = new PluginInfo();
-			PluginInfo.map.put(pluginName, p);
-			try {
-				String packageName = pluginName.substring(0,pluginName.lastIndexOf('.'));
-				p.loader = new ApkPluginLoader(APP, initPlugin(packageName,APP));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+				String packageName = pluginName.substring(0,
+						pluginName.lastIndexOf('.'));
+				p = new PluginInfo();
+				p.loader = requirePluginPackage(packageName);
+				infoMap.put(pluginName, p);
 		}
 		return p;
 	}
 
-	public static File initPlugin(String packageName,Application app) throws IOException{
-		File pluginDir = app.getDir("plugin", 0);
-		String fileName = packageName+".apk";
-		InputStream in = app.getResources().getAssets().open(fileName);
-		File plugin = new File(pluginDir,fileName);
-		FileOutputStream out = new FileOutputStream(plugin);
-		byte[] buf = new byte[128];
-		int c;
-		while((c= in.read(buf))>=0){
-			out.write(buf,0,c);
+	protected PluginPackage requirePluginPackage(String packageName) {
+		PluginPackage loader = loaderMap.get(packageName);
+		if (loader == null) {
+			loader = new ApkPluginLoader(app, initResource(packageName, app));
 		}
-		out.close();in.close();
-		return plugin;
+		return loader;
+	}
+
+	protected File initResource(String packageName, Application app) {
+		File pluginDir = app.getDir("plugin", 0);
+		String fileName = packageName + ".apk";
+		try {
+			InputStream in = app.getResources().getAssets().open(fileName);
+			File plugin = new File(pluginDir, fileName);
+			FileOutputStream out = new FileOutputStream(plugin);
+			byte[] buf = new byte[128];
+			int c;
+			while ((c = in.read(buf)) >= 0) {
+				out.write(buf, 0, c);
+			}
+
+			out.close();
+			in.close();
+
+			return plugin;
+		} catch (IOException ex) {
+			ex.printStackTrace();
+			throw new RuntimeException(ex);
+		} catch (RuntimeException ex) {
+			ex.printStackTrace();
+			throw ex;
+		} finally {
+
+		}
 	}
 }

@@ -1,10 +1,16 @@
 package org.xidea.android.host;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
 
 import android.app.Application;
 import android.content.Context;
@@ -12,19 +18,68 @@ import android.content.ContextWrapper;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.content.res.Resources.Theme;
+import android.content.res.XmlResourceParser;
 import android.view.LayoutInflater;
 
 import dalvik.system.DexClassLoader;
 
-public class ApkPluginLoader implements PluginLoader {
-	private ArrayList<ClassLoader> dependences = new ArrayList<ClassLoader>();
-	private ApkContext context;
-	ApkClassLoader classLoader;
+public class ApkPluginLoader extends ApkClassLoader implements PluginPackage {
+
+	private List<String> plugins = new ArrayList<String>(); 
+
 
 	public ApkPluginLoader(Application app, File source) {
-		this.context = new ApkContext(app, source);
-		this.classLoader = new ApkClassLoader(context, dependences);
-		context.classLoader = classLoader;
+		super(new ApkContext(app, source), new ArrayList<ClassLoader>());
+		init();
+		
+	}
+
+	protected void init() {
+		InputStream in = null;
+		//XmlResourceParser xml = null;
+		try {
+//			xml = context.getAssets().openXmlResourceParser("res/xml/package.xml");
+			 in = context.getAssets().open("package.xml");
+			  XmlPullParserFactory factory = XmlPullParserFactory.newInstance(); 
+			  factory.setNamespaceAware(true); 
+			  XmlPullParser xml = factory.newPullParser(); 
+			  xml.setInput(in, "UTF-8");  
+			outer:
+			while(true){
+				switch(xml.next()){
+				case XmlPullParser.START_TAG:
+					String tagName = xml.getName();
+					if("package".equals(tagName)){
+						String packageName = xml.getAttributeValue(0);
+					}else if("plugin".equals(tagName)){
+						String pluginName = xml.getAttributeValue(0);
+						this.plugins.add(pluginName);
+					}else if("dependence".equals(tagName)){
+						String dependence = xml.getAttributeValue(0);
+						this.dependences.add(HostEnv.requirePluginPackage(dependence).getClassLoader());
+					}else if("export".equals(tagName)){
+						String export = xml.getAttributeValue(0);
+						super.addPublicPackage(export);
+					}
+					break;
+				case XmlPullParser.END_TAG:
+					break;
+				case XmlPullParser.END_DOCUMENT:
+					break outer;
+				}
+				
+			}
+
+			in.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (XmlPullParserException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}finally{
+			//xml.close();
+		}
 	}
 
 	public List<ClassLoader> getDependences() {
@@ -39,21 +94,19 @@ public class ApkPluginLoader implements PluginLoader {
 		return context;
 	}
 
-	public void addDependence(ClassLoader loader) {
+	protected void addDependence(ClassLoader loader) {
 		dependences.add(loader);
 	}
 
 	@Override
 	public ClassLoader getClassLoader() {
-		return this.classLoader;
+		return this;
 	}
 
-	public Class<?> loadClass(String className) throws ClassNotFoundException {
-		return ((ApkClassLoader)this.classLoader).loadClass0(className);
-	}
+
 	@Override
-	public Plugin getPlugin() {
-		return null;
+	public Plugin getDefaultPlugin() {
+		return HostEnv.getPlugin(plugins.get(0));
 	}
 
 }
@@ -61,14 +114,17 @@ public class ApkPluginLoader implements PluginLoader {
 class ApkClassLoader extends DexClassLoader {
 
 	private PublishConfig publishConfig = new PublishConfig();
-	private List<ClassLoader> dependences;
+	protected List<ClassLoader> dependences;
+	protected ApkContext context;
 
-	ApkClassLoader(ApkContext config, List<ClassLoader> dependences) {
-		super(config.dexPath, config.optimizedDirectory, config.libraryPath,ApkClassLoader.class.getClassLoader());
+	ApkClassLoader(ApkContext context, List<ClassLoader> dependences) {
+		super(context.dexPath, context.optimizedDirectory, context.libraryPath,ApkClassLoader.class.getClassLoader());
 		this.dependences = dependences;
+		context.classLoader = this;
+		this.context = context;
 	}
 
-	Class<?> loadClass0(String className) throws ClassNotFoundException {
+	public Class<?> loadClass(String className) throws ClassNotFoundException {
 		return super.loadClass(className, false);
 	}
 

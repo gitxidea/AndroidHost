@@ -58,9 +58,24 @@
 	<fail message="sdk.dir is missing. Make sure to generate local.properties using &apos;android update project&apos; or to inject it through the ANDROID_HOME environment variable." unless="sdk.dir" />
 
 	<!-- START: Customized build target ant: deploy. Added by Lucas Xu at 2013/03/18 -->
-
+    <!-- Puts the project's resources into the output package file
+         This actually can create multiple resource package in case
+         Some custom apk with specific configuration have been
+         declared in default.properties.
+         -->
+    <target name="-pre-deploy-copy">
+        <property name="asset.dir" value="${out.dir}/assets" />
+    	<mkdir dir="${asset.dir}"/>
+       	<copy todir="${asset.dir}">
+       		<fileset dir="assets">
+       			<include name="**"/>
+       		</fileset>
+       	</copy>
+       	
+    </target>
+	
 	<!-- Converts this project's .class files into .dex files -->
-	<target name="-pre-deploy" depends="release">
+	<target name="-pre-deploy" depends="-pre-deploy-copy,release">
 		<delete>
 			<fileset dir="${out.absolute.dir}" includes="*.dex" />
 			<fileset dir="${out.absolute.dir}" includes="*.dex.d" />
