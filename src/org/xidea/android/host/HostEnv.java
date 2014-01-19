@@ -1,10 +1,14 @@
 package org.xidea.android.host;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Enumeration;
 import java.util.WeakHashMap;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import android.app.Application;
 
@@ -109,21 +113,25 @@ class HostImpl {
 	}
 
 	protected File initResource(String packageName, Application app) {
-		File pluginDir = app.getDir("plugin", 0);
+		File pluginDir = app.getDir("plugin/"+packageName, 0);
 		String fileName = packageName + ".apk";
 		try {
 			InputStream in = app.getResources().getAssets().open(fileName);
-			File plugin = new File(pluginDir, fileName);
-			FileOutputStream out = new FileOutputStream(plugin);
-			byte[] buf = new byte[128];
-			int c;
-			while ((c = in.read(buf)) >= 0) {
-				out.write(buf, 0, c);
+			File plugin = new File(pluginDir, "0.apk");
+			copy(in, plugin);
+			ZipFile file = new ZipFile(plugin);
+			Enumeration<? extends ZipEntry> e = file.entries();
+			while(e.hasMoreElements()){
+				ZipEntry entry = e.nextElement();
+				if(!entry.isDirectory()){
+					InputStream ein = file.getInputStream(entry);
+					//TODO:平台差异
+					String name = entry.getName();
+					if(name.endsWith(".so") && name.startsWith("libs/")){
+						copy(in,new File(pluginDir,name.substring(name.lastIndexOf('/')+1)));
+					}
+				}
 			}
-
-			out.close();
-			in.close();
-
 			return plugin;
 		} catch (IOException ex) {
 			ex.printStackTrace();
@@ -134,5 +142,17 @@ class HostImpl {
 		} finally {
 
 		}
+	}
+
+	private void copy(InputStream in, File plugin)
+			throws FileNotFoundException, IOException {
+		FileOutputStream out = new FileOutputStream(plugin);
+		byte[] buf = new byte[128];
+		int c;
+		while ((c = in.read(buf)) >= 0) {
+			out.write(buf, 0, c);
+		}
+		out.close();
+		in.close();
 	}
 }

@@ -5,6 +5,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import dalvik.system.DexClassLoader;
+
 
 import android.annotation.SuppressLint;
 import android.app.Application;
@@ -20,16 +22,7 @@ public class PluginTest {
 		a = HostEnv.requirePluginPackage("com.example.a");
 		b = HostEnv.requirePluginPackage("com.example.b");
 		c = HostEnv.requirePluginPackage("com.example.c");
-//		a.getBaseContext().getAssets().get
-//		ApkPluginLoader b = new ApkPluginLoader(app, fb);
-//		b.addDependence(a.classLoader);
-//		b.classLoader.addPublicPackage("com.example.b");
-//		ApkPluginLoader c = new ApkPluginLoader(app, fc);
-//		c.addDependence(b.classLoader);
-//		c.classLoader.addPublicPackage("com.example.c");
-//		this.a = a;
-//		this.b=b;
-//		this.c = c;
+//		((DexClassLoader)a.getClassLoader()).findLibrary(name)
 	}
 	@SuppressLint("NewApi")
 	public Class<?>[] loadClasses(){

@@ -206,13 +206,10 @@ class ApkContext extends ContextWrapper {
 
 	public ApkContext(Application app, File source) {
 		super(app);
-		File pluginDir = app.getDir("plugin", 0);
-		if (!pluginDir.exists()) {
-			pluginDir.mkdir();
-		}
+		File pluginDir = source.getParentFile();
 		this.dexPath = source.getAbsolutePath();
 		this.optimizedDirectory = pluginDir.getAbsolutePath();
-		this.libraryPath = null;
+		this.libraryPath = optimizedDirectory;
 		try {
 			this.assetManager = AssetManager.class.newInstance();
 			addAssetPath.invoke(assetManager, dexPath);
