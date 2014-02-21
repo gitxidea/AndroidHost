@@ -38,8 +38,7 @@ public class HostApplication extends Application {
 		super.onCreate();
 		HostEnv.init(this);
 		//load map example
-		HostEnv.requirePluginPackage("com.example.a");
-		
+		HostEnv.requirePluginPackage("com.example.b");
 		Object[] callbacks = callbackList.toArray();
 		for (int i = 0; i < callbacks.length; i++) {
 			Object c = callbacks[i];
@@ -57,6 +56,7 @@ public class HostApplication extends Application {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
 			registerComponentCallbacks(callback);
 		}
+		callback.onCreate(this);
 	}
 
 	@SuppressLint("NewApi")

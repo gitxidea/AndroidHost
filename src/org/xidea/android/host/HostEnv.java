@@ -11,8 +11,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import android.app.Application;
-import android.app.Fragment;
-import android.content.Intent;
 
 public class HostEnv {
 	private static HostImpl impl;
@@ -48,7 +46,7 @@ public class HostEnv {
 class HostImpl {
 	Application app;
 
-	private WeakHashMap<String, PluginInfo> infoMap = new WeakHashMap<String, PluginInfo>();
+	private WeakHashMap<String, PluginInfo<?>> infoMap = new WeakHashMap<String, PluginInfo<?>>();
 	private WeakHashMap<String, PluginPackage> loaderMap = new WeakHashMap<String, PluginPackage>();
 
 	private static class PluginInfo<T extends Plugin> {
@@ -64,19 +62,18 @@ class HostImpl {
 		this.app = app;
 	}
 
+	@SuppressWarnings({"unchecked","rawtypes"})
 	protected <T extends Plugin> T getPlugin(String type) {
 		try {
-			@SuppressWarnings("unchecked")
-			PluginInfo<T> p = infoMap.get(type);
+			PluginInfo p = requirePluginInfo(type);
 			if (p.plugin == null) {
-				PluginPackage loader = requirePluginInfo(type).loader;
-				@SuppressWarnings("unchecked")
+				PluginPackage loader = p.loader;
 				Class<T> clazz = (Class<T>) ((ApkPluginLoader) loader)
 						.loadClass(type);
 				p.plugin = clazz.newInstance();
 				p.plugin.install(loader);
 			}
-			return p.plugin;
+			return (T)p.plugin;
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		} catch (InstantiationException e) {
@@ -113,17 +110,18 @@ class HostImpl {
 	protected PluginPackage requirePluginPackage(String packageName) {
 		PluginPackage loader = loaderMap.get(packageName);
 		if (loader == null) {
-			loader = new ApkPluginLoader(app, initResource(packageName, app));
+			File plugin = ApkPluginLoader.getPluginDest(app, packageName);
+			initResource( app,packageName,plugin);
+			loader = new ApkPluginLoader(app,packageName);
 		}
 		return loader;
 	}
 
-	protected File initResource(String packageName, Application app) {
-		File pluginDir = app.getDir("plugin_"+packageName, 0);
+	protected File initResource(Application app,String packageName, File plugin) {
 		String fileName = packageName + ".apk";
 		try {
 			InputStream in = app.getResources().getAssets().open(fileName);
-			File plugin = new File(pluginDir, "0.apk");
+			File pluginDir = plugin.getParentFile();
 			copy(in, plugin);
 			ZipFile file = new ZipFile(plugin);
 			Enumeration<? extends ZipEntry> e = file.entries();

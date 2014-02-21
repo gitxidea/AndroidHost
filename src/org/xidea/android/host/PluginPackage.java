@@ -6,6 +6,7 @@ import android.content.Context;
 import android.view.LayoutInflater;
 
 public abstract interface PluginPackage {
+	public abstract String getId();
 	public abstract Plugin getDefaultPlugin();
 
 	public abstract Context getPluginContext();

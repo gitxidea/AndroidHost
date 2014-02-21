@@ -25,39 +25,48 @@ import dalvik.system.DexClassLoader;
 
 public class ApkPluginLoader extends ApkClassLoader implements PluginPackage {
 
-	private List<String> plugins = new ArrayList<String>(); 
+	private List<String> plugins = new ArrayList<String>();
+	static File getPluginDest(Application app, String id) {
+		File dir =  app.getDir("plugin_"+id, 0);
+		return new File(dir,"0.apk");
+	}
 
-
-	public ApkPluginLoader(Application app, File source) {
-		super(new ApkContext(app, source), new ArrayList<ClassLoader>());
+	private String id;
+	public ApkPluginLoader(Application app, String id) {
+		super(new ApkContext(app, id), new ArrayList<ClassLoader>());
 		init();
-		
+
+	}
+
+	public String getId() {
+		return this.id;
 	}
 
 	protected void init() {
 		InputStream in = null;
-		//XmlResourceParser xml = null;
+		// XmlResourceParser xml = null;
 		try {
-//			xml = context.getAssets().openXmlResourceParser("res/xml/package.xml");
-			 in = context.getAssets().open("package.xml");
-			  XmlPullParserFactory factory = XmlPullParserFactory.newInstance(); 
-			  factory.setNamespaceAware(true); 
-			  XmlPullParser xml = factory.newPullParser(); 
-			  xml.setInput(in, "UTF-8");  
-			outer:
-			while(true){
-				switch(xml.next()){
+			// xml =
+			// context.getAssets().openXmlResourceParser("res/xml/package.xml");
+			in = context.getAssets().open("package.xml");
+			XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+			factory.setNamespaceAware(true);
+			XmlPullParser xml = factory.newPullParser();
+			xml.setInput(in, "UTF-8");
+			outer: while (true) {
+				switch (xml.next()) {
 				case XmlPullParser.START_TAG:
 					String tagName = xml.getName();
-					if("package".equals(tagName)){
+					if ("package".equals(tagName)) {
 						String packageName = xml.getAttributeValue(0);
-					}else if("plugin".equals(tagName)){
+					} else if ("plugin".equals(tagName)) {
 						String pluginName = xml.getAttributeValue(0);
 						this.plugins.add(pluginName);
-					}else if("dependence".equals(tagName)){
+					} else if ("dependence".equals(tagName)) {
 						String dependence = xml.getAttributeValue(0);
-						this.dependences.add(HostEnv.requirePluginPackage(dependence).getClassLoader());
-					}else if("export".equals(tagName)){
+						this.dependences.add(HostEnv.requirePluginPackage(
+								dependence).getClassLoader());
+					} else if ("export".equals(tagName)) {
 						String export = xml.getAttributeValue(0);
 						super.addPublicPackage(export);
 					}
@@ -67,7 +76,7 @@ public class ApkPluginLoader extends ApkClassLoader implements PluginPackage {
 				case XmlPullParser.END_DOCUMENT:
 					break outer;
 				}
-				
+
 			}
 
 			in.close();
@@ -77,8 +86,8 @@ public class ApkPluginLoader extends ApkClassLoader implements PluginPackage {
 		} catch (XmlPullParserException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}finally{
-			//xml.close();
+		} finally {
+			// xml.close();
 		}
 	}
 
@@ -87,7 +96,8 @@ public class ApkPluginLoader extends ApkClassLoader implements PluginPackage {
 	}
 
 	public LayoutInflater getLayoutInflater() {
-		return (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		return (LayoutInflater) context
+				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 	}
 
 	public Context getPluginContext() {
@@ -103,7 +113,6 @@ public class ApkPluginLoader extends ApkClassLoader implements PluginPackage {
 		return this;
 	}
 
-
 	@Override
 	public Plugin getDefaultPlugin() {
 		return HostEnv.getPlugin(plugins.get(0));
@@ -118,7 +127,8 @@ class ApkClassLoader extends DexClassLoader {
 	protected ApkContext context;
 
 	ApkClassLoader(ApkContext context, List<ClassLoader> dependences) {
-		super(context.dexPath, context.optimizedDirectory, context.libraryPath,ApkClassLoader.class.getClassLoader());
+		super(context.dexPath, context.optimizedDirectory, context.libraryPath,
+				ApkClassLoader.class.getClassLoader());
 		this.dependences = dependences;
 		context.classLoader = this;
 		this.context = context;
@@ -167,7 +177,9 @@ class ApkClassLoader extends DexClassLoader {
 			if (buf.length() > 0) {
 				buf.append('|');
 			}
-			buf.append("^" + name.replaceAll("[\\.]", "\\.").replaceAll("[\\$]", "\\$") + "$");
+			buf.append("^"
+					+ name.replaceAll("[\\.]", "\\.")
+							.replaceAll("[\\$]", "\\$") + "$");
 			publicPattern = null;
 		}
 
@@ -204,8 +216,9 @@ class ApkContext extends ContextWrapper {
 	LayoutInflater layoutInflater;
 	private Theme theme;
 
-	public ApkContext(Application app, File source) {
+	public ApkContext(Application app, String id) {
 		super(app);
+		File source = ApkPluginLoader.getPluginDest(app, id);
 		File pluginDir = source.getParentFile();
 		this.dexPath = source.getAbsolutePath();
 		this.optimizedDirectory = pluginDir.getAbsolutePath();
@@ -217,6 +230,7 @@ class ApkContext extends ContextWrapper {
 			throw new RuntimeException("Plugin init failed", e);
 		}
 	}
+
 
 	public Resources.Theme getTheme() {
 		if (this.theme == null) {
@@ -230,12 +244,13 @@ class ApkContext extends ContextWrapper {
 	public Object getSystemService(String name) {
 		if (Context.LAYOUT_INFLATER_SERVICE.equals(name)) {
 			if (layoutInflater == null) {
-				LayoutInflater service = (LayoutInflater) super.getSystemService(name);
+				LayoutInflater service = (LayoutInflater) super
+						.getSystemService(name);
 				this.layoutInflater = service.cloneInContext(this);
 			}
 			return layoutInflater;
 		}
-		return  super.getSystemService(name);
+		return super.getSystemService(name);
 	}
 
 	public AssetManager getAssets() {
