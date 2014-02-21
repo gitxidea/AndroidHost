@@ -19,7 +19,7 @@ public class LoadingActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.loading);
-		this.startActivity(HostActivity.create("com.example.b",null));
+		this.startActivity(HostActivity.create("com.example.a",null));
 		 finish();
 	}
 

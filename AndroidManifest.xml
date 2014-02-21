@@ -17,16 +17,14 @@
             android:name="org.xidea.android.host.HostActivity"
             android:theme="@style/AppBaseTheme"
             android:label="@string/title_activity_main" >
-            <intent-filter >
-                
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
         <activity
-            android:name="org.xidea.android.host.MainActivity"
+            android:name="org.xidea.android.host.LoadingActivity"
             android:label="@string/title_activity_main" >
+            <intent-filter >
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
         
     </application>
