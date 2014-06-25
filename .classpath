@@ -6,19 +6,5 @@
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
 	<classpathentry kind="output" path="bin/classes"/>
-	<!-- 
-	项目现在处在关键时期，我们的目标是赶在7月20日  提供支持并行开发的AMap模块化组件化架构，完成个人中心，发现模块 的插件化重构验证，并与主版同步提交测试 。
-
-8月底前最终稳定接口，上线插件发布管理平台，支持功能点的动态静默升级，
-
-目前团队成员普遍  6.5 * 12 小时的紧张工作。 而且 3个主要成员离公司太远【30 -> 50 公里】，为了更好的利用时间，我申请直接住公司附近。直到月底正式提测试上线。
-同时我希望能申请一笔费用用于周末和平时加班餐费，零食饮料水果等。
-
-费用总计：
-一期：
-6月15日到7月20日
-住宿：6月26日到
-
-二期：
-8月1日到8月31日 -->
+	
 </classpath>
